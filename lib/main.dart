@@ -21,27 +21,32 @@ class UI extends StatefulWidget {
 }
 
 class _UIState extends State<UI> {
-  double rpmVal = 0;
+  double rpmVal = 850;
   double oilTempVal = 25;
+  String bImage = "assets/background.jpg";
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Color(0xff211a1e),
-        body: Padding(
-          padding: const EdgeInsets.only(top: 50.0),
+        
+        body: Container(
+          decoration: BoxDecoration(image: DecorationImage(image: AssetImage(bImage), fit: BoxFit.fill)),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   buildRPM(),
+                  buildOutdoorTemp(),
                   buildOilTemp(),
                 ],
               ),
               TextButton(
-                  onPressed: () => looos(),
+                  onPressed: () {
+                    looos();
+                  },
                   child: Text(
                     "REV IT!",
                     style: TextStyle(fontSize: 22),
@@ -53,155 +58,195 @@ class _UIState extends State<UI> {
     );
   }
 
-  SfRadialGauge buildRPM() {
-    return SfRadialGauge(
-      enableLoadingAnimation: true,
-      animationDuration: 2000,
-      axes: [
-        RadialAxis(
-          radiusFactor: 0.8,
-          minimum: 0,
-          maximum: 6000,
-          startAngle: 170,
-          endAngle: 370,
-          labelOffset: 20,
-          tickOffset: 10,
-          axisLabelStyle: GaugeTextStyle(color: Colors.white),
-          majorTickStyle: MajorTickStyle(color: Colors.white),
-          minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
-          ranges: [
-            GaugeRange(
-              startValue: 0,
-              endValue: 3000,
-              color: Colors.green[700],
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-            GaugeRange(
-              startValue: 3050,
-              endValue: 5000,
-              color: Colors.orange,
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-            GaugeRange(
-              startValue: 5050,
-              endValue: 6000,
-              color: Colors.red,
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-          ],
-          pointers: [
-            NeedlePointer(
-              value: rpmVal,
-              enableAnimation: true,
-              lengthUnit: GaugeSizeUnit.factor,
-              needleStartWidth: 1,
-              needleEndWidth: 8,
-              needleLength: 0.8,
-              needleColor: Colors.redAccent,
-              knobStyle: makeKnob(),
-              tailStyle: makeTail(),
-            )
-          ],
-          annotations: const <GaugeAnnotation>[
-            GaugeAnnotation(
-                angle: 90,
-                positionFactor: 0.35,
-                widget: Text('RPM x1000',
-                    style: TextStyle(color: Colors.white, fontSize: 16))),
-          ],
-        )
-      ],
+  SizedBox buildRPM() {
+    return SizedBox(
+      width: 400,
+      height: 400,
+      child: SfRadialGauge(
+        
+        enableLoadingAnimation: true,
+        animationDuration: 2000,
+        axes: [
+          RadialAxis(
+            backgroundImage: AssetImage("assets/dark_theme_gauge.png"),
+            radiusFactor: 1,
+            
+            minimum: 0,
+            maximum: 6000,
+            startAngle: 170,
+            endAngle: 370,
+            labelOffset: 25,
+            tickOffset: 60,
+            axisLabelStyle: GaugeTextStyle(color: Colors.white),
+            majorTickStyle: MajorTickStyle(color: Colors.white),
+            minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
+            
+            pointers: [
+              NeedlePointer(
+                value: rpmVal,
+                enableAnimation: true,
+                lengthUnit: GaugeSizeUnit.factor,
+                needleStartWidth: 1,
+                needleEndWidth: 8,
+                needleLength: 0.6,
+                needleColor: Colors.redAccent,
+                knobStyle: makeKnob(),
+              )
+            ],
+            annotations: const <GaugeAnnotation>[
+              GaugeAnnotation(
+                  angle: 90,
+                  positionFactor: 0.5,
+                  widget: Text('RPM x1000',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+            ],
+          )
+        ],
+      ),
     );
   }
 
-  SfRadialGauge buildOilTemp() {
-    return SfRadialGauge(
-      enableLoadingAnimation: true,
-      animationDuration: 2000,
-      axes: [
-        RadialAxis(
-          radiusFactor: 0.8,
-          minimum: 0,
-          maximum: 130,
-          startAngle: 170,
-          endAngle: 370,
-          labelOffset: 20,
-          tickOffset: 10,
-          axisLabelStyle: GaugeTextStyle(color: Colors.white),
-          majorTickStyle: MajorTickStyle(color: Colors.white),
-          minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
-          ranges: [
-            GaugeRange(
-              startValue: 0,
-              endValue: 50,
-              color: Colors.blue,
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-            GaugeRange(
-              startValue: 51,
-              endValue: 70,
-              color: Colors.cyan[700],
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-            GaugeRange(
-              startValue: 71,
-              endValue: 100,
-              color: Colors.green[700],
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-            GaugeRange(
-              startValue: 101,
-              endValue: 130,
-              color: Colors.red,
-              startWidth: 15.0,
-              endWidth: 15.0,
-            ),
-          ],
-          pointers: [
-            NeedlePointer(
+  SizedBox buildOilTemp() {
+    return SizedBox(
+      width: 400,
+      height: 400,
+      child: SfRadialGauge(
+        enableLoadingAnimation: true,
+        animationDuration: 2000,
+        axes: [
+          RadialAxis(
+            backgroundImage: AssetImage("assets/dark_theme_gauge.png"),
+            radiusFactor: 1,
+            minimum: 0,
+            maximum: 130,
+            startAngle: 170,
+            endAngle: 370,
+            labelOffset: 20,
+            tickOffset: 60,
+            axisLabelStyle: GaugeTextStyle(color: Colors.white),
+            majorTickStyle: MajorTickStyle(color: Colors.white),
+            minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
+            ranges: [
+              GaugeRange(
+                rangeOffset: 110,
+                startValue: 0,
+                endValue: 50,
+                color: Colors.blue,
+                startWidth: 15.0,
+                endWidth: 15.0,
+              ),
+              GaugeRange(
+                rangeOffset: 110,
+                startValue: 51,
+                endValue: 70,
+                color: Colors.cyan[700],
+                startWidth: 15.0,
+                endWidth: 15.0,
+              ),
+              GaugeRange(
+                rangeOffset: 110,
+                startValue: 71,
+                endValue: 110,
+                color: Colors.green[700],
+                startWidth: 15.0,
+                endWidth: 15.0,
+              ),
+              GaugeRange(
+                rangeOffset: 110,
+                startValue: 101,
+                endValue: 130,
+                color: Colors.red,
+                startWidth: 15.0,
+                endWidth: 15.0,
+              ),
+            ],
+            pointers: [
+              NeedlePointer(
                 value: oilTempVal,
                 enableAnimation: true,
                 lengthUnit: GaugeSizeUnit.factor,
                 needleStartWidth: 1,
                 needleEndWidth: 8,
-                needleLength: 0.8,
+                needleLength: 0.6,
                 needleColor: Colors.redAccent,
-                tailStyle: makeTail(),
-                knobStyle: makeKnob())
-          ],
-          annotations: const <GaugeAnnotation>[
-            GaugeAnnotation(
-                angle: 90,
-                positionFactor: 0.35,
-                widget: Text('Oil Temp.°C',
-                    style: TextStyle(color: Colors.deepOrange, fontSize: 16))),
-          ],
-        )
-      ],
+                knobStyle: makeKnob(),
+              )
+            ],
+            annotations: const <GaugeAnnotation>[
+              GaugeAnnotation(
+                  angle: 90,
+                  positionFactor: 0.5,
+                  widget: Text('Oil Temp °C',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+            ],
+          )
+        ],
+      ),
     );
   }
 
-  TailStyle makeTail() {
-    return TailStyle(
-        color: Colors.redAccent,
-        width: 8,
-        lengthUnit: GaugeSizeUnit.factor,
-        length: 0.2);
+  SizedBox buildOutdoorTemp() {
+    return SizedBox(
+      
+      width: 200,
+      height: 200,
+      child: SfRadialGauge(
+        axes: <RadialAxis>[
+          RadialAxis(
+            
+            interval: 1,
+            radiusFactor:1,
+            startAngle: 270,
+            endAngle: 270,
+            showTicks: false,
+            showLabels: false,
+            axisLineStyle: const AxisLineStyle(thickness: 20),
+            pointers: const <GaugePointer>[
+              RangePointer(
+                  value: 26,
+                  width: 20,
+                  color: Colors.white,
+                  enableAnimation: true,
+                  gradient: SweepGradient(
+                      colors: <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
+                      stops: <double>[0.25, 0.75]),
+                  cornerStyle: CornerStyle.bothCurve)
+            ],
+            annotations: <GaugeAnnotation>[
+              GaugeAnnotation(
+                  widget: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const <Widget>[
+                      // Added image widget as an annotation
+                      
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(0, 2, 0, 0),
+                        child: Text('28°C',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25,
+                                color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                  angle: 270,
+                  positionFactor: 0.1)
+            ])
+        ],
+      ),
+    );
   }
+
+  
 
   KnobStyle makeKnob() {
     return KnobStyle(
-        knobRadius: 0.07,
+        knobRadius: 0.08,
         sizeUnit: GaugeSizeUnit.factor,
-        borderColor: Colors.redAccent,
-        color: Colors.white,
-        borderWidth: 0.05);
+        color: Colors.black,
+        borderWidth: 0.05,
+        borderColor: Colors.black
+        );
   }
 
   void updateRPM(double newValue) {
@@ -218,6 +263,7 @@ class _UIState extends State<UI> {
 
   void looos() async {
     setState(() {
+      
       rpmVal = 5600;
       Timer(Duration(milliseconds: 1000), () {
         setState(() {
