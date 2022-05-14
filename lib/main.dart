@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gpiod/flutter_gpiod.dart';
 //import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
@@ -24,14 +25,31 @@ class _UIState extends State<UI> {
   double rpmVal = 850;
   double oilTempVal = 25;
   String bImage = "assets/background.jpg";
+  var line1;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final chips = FlutterGpiod.instance.chips;
+
+    final chip = chips.singleWhere(
+      (chip) => chip.label == 'pinctrl-bcm2711',
+      orElse: () =>
+          chips.singleWhere((chip) => chip.label == 'pinctrl-bcm2835'),
+    );
+
+    line1 = chip.lines[23];
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        
         body: Container(
-          decoration: BoxDecoration(image: DecorationImage(image: AssetImage(bImage), fit: BoxFit.fill)),
+          decoration: BoxDecoration(
+              image:
+                  DecorationImage(image: AssetImage(bImage), fit: BoxFit.fill)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -39,13 +57,21 @@ class _UIState extends State<UI> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   buildRPM(),
-                  buildOutdoorTemp(),
+                  Column(
+                    children: [
+                      buildOutdoorTemp(),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      buildVoltage()
+                    ],
+                  ),
                   buildOilTemp(),
                 ],
               ),
               TextButton(
                   onPressed: () {
-                    looos();
+                    getDataFromGPIO();
                   },
                   child: Text(
                     "REV IT!",
@@ -63,14 +89,12 @@ class _UIState extends State<UI> {
       width: 400,
       height: 400,
       child: SfRadialGauge(
-        
         enableLoadingAnimation: true,
         animationDuration: 2000,
         axes: [
           RadialAxis(
             backgroundImage: AssetImage("assets/dark_theme_gauge.png"),
             radiusFactor: 1,
-            
             minimum: 0,
             maximum: 6000,
             startAngle: 170,
@@ -80,7 +104,6 @@ class _UIState extends State<UI> {
             axisLabelStyle: GaugeTextStyle(color: Colors.white),
             majorTickStyle: MajorTickStyle(color: Colors.white),
             minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
-            
             pointers: [
               NeedlePointer(
                 value: rpmVal,
@@ -98,7 +121,10 @@ class _UIState extends State<UI> {
                   angle: 90,
                   positionFactor: 0.5,
                   widget: Text('RPM x1000',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold))),
             ],
           )
         ],
@@ -177,7 +203,10 @@ class _UIState extends State<UI> {
                   angle: 90,
                   positionFactor: 0.5,
                   widget: Text('Oil Temp °C',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold))),
             ],
           )
         ],
@@ -187,57 +216,106 @@ class _UIState extends State<UI> {
 
   SizedBox buildOutdoorTemp() {
     return SizedBox(
-      
       width: 200,
       height: 200,
       child: SfRadialGauge(
         axes: <RadialAxis>[
           RadialAxis(
-            
-            interval: 1,
-            radiusFactor:1,
-            startAngle: 270,
-            endAngle: 270,
-            showTicks: false,
-            showLabels: false,
-            axisLineStyle: const AxisLineStyle(thickness: 20),
-            pointers: const <GaugePointer>[
-              RangePointer(
-                  value: 26,
-                  width: 20,
-                  color: Colors.white,
-                  enableAnimation: true,
-                  gradient: SweepGradient(
-                      colors: <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
-                      stops: <double>[0.25, 0.75]),
-                  cornerStyle: CornerStyle.bothCurve)
-            ],
-            annotations: <GaugeAnnotation>[
-              GaugeAnnotation(
-                  widget: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const <Widget>[
-                      // Added image widget as an annotation
-                      
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(0, 2, 0, 0),
-                        child: Text('28°C',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 25,
-                                color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                  angle: 270,
-                  positionFactor: 0.1)
-            ])
+              interval: 1,
+              radiusFactor: 1,
+              startAngle: 270,
+              endAngle: 270,
+              showTicks: false,
+              showLabels: false,
+              axisLineStyle: const AxisLineStyle(thickness: 20),
+              pointers: const <GaugePointer>[
+                RangePointer(
+                    value: 26,
+                    width: 20,
+                    color: Colors.white,
+                    enableAnimation: true,
+                    gradient: SweepGradient(
+                        colors: <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
+                        stops: <double>[0.25, 0.75]),
+                    cornerStyle: CornerStyle.bothCurve)
+              ],
+              annotations: <GaugeAnnotation>[
+                GaugeAnnotation(
+                    widget: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const <Widget>[
+                        // Added image widget as an annotation
+
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(0, 2, 0, 0),
+                          child: Text('28°C',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 25,
+                                  color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                    angle: 270,
+                    positionFactor: 0.1)
+              ])
         ],
       ),
     );
   }
 
-  
+  SizedBox buildVoltage() {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: SfRadialGauge(
+        axes: <RadialAxis>[
+          RadialAxis(
+              startAngle: 180,
+              endAngle: 360,
+              radiusFactor: 1,
+              canScaleToFit: true,
+              interval: 10,
+              showLabels: false,
+              showAxisLine: false,
+              pointers: const <GaugePointer>[
+                MarkerPointer(
+                    value: 90,
+                    elevation: 4,
+                    markerWidth: 25,
+                    markerHeight: 25,
+                    color: Color(0xFFF67280),
+                    markerType: MarkerType.invertedTriangle,
+                    markerOffset: -7)
+              ],
+              annotations: const [
+                GaugeAnnotation(
+                    angle: 270,
+                    positionFactor: 0.1,
+                    widget: Text('14,2 V',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white))),
+              ],
+              ranges: <GaugeRange>[
+                GaugeRange(
+                  startValue: 0,
+                  endValue: 100,
+                  sizeUnit: GaugeSizeUnit.factor,
+                  gradient: const SweepGradient(
+                      colors: <Color>[Colors.red, Colors.green],
+                      stops: <double>[0.25, 0.75]),
+                  startWidth: 0.4,
+                  endWidth: 0.4,
+                  color: const Color(0xFF00A8B5),
+                )
+              ],
+              showTicks: false),
+        ],
+      ),
+    );
+  }
 
   KnobStyle makeKnob() {
     return KnobStyle(
@@ -245,8 +323,7 @@ class _UIState extends State<UI> {
         sizeUnit: GaugeSizeUnit.factor,
         color: Colors.black,
         borderWidth: 0.05,
-        borderColor: Colors.black
-        );
+        borderColor: Colors.black);
   }
 
   void updateRPM(double newValue) {
@@ -261,15 +338,14 @@ class _UIState extends State<UI> {
     });
   }
 
-  void looos() async {
-    setState(() {
-      
-      rpmVal = 5600;
-      Timer(Duration(milliseconds: 1000), () {
-        setState(() {
-          rpmVal = 850;
-        });
-      });
-    });
+  void getDataFromGPIO() {
+    /// Now we're listening for falling and rising edge events
+    /// on BCM 23
+    print("LOOL");
+    line1.requestInput(
+        consumer: "test 1", triggers: {SignalEdge.falling, SignalEdge.rising});
+
+    print("line value: ${line1.getValue()}");
+    line1.release();
   }
 }
