@@ -27,9 +27,11 @@ class _UIState extends State<UI> {
 
 
   GpioHandling handler = GpioHandling.instance;
+  
 
   @override
   Widget build(BuildContext context) {
+    handler.testingGPIO();
     return SafeArea(
       child: Scaffold(
         body: Container(

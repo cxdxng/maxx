@@ -18,11 +18,18 @@ class GpioHandling{
   }
 
   void testingGPIO()async{
+
+    // Get the main Raspberry Pi GPIO chip.
+    // On Raspberry Pi 4 the main GPIO chip is called `pinctrl-bcm2711` and
+    // on older Pi's or a Pi 4 with older kernel version it's called `pinctrl-bcm2835`.
     final chip = FlutterGpiod.instance.chips.singleWhere((chip) => chip.label == 'pinctrl-bcm2835');
+
+    // Get line 22 of the GPIO chip.
+    // This is the BCM 22 pin of the Raspberry Pi.
     final line = chip.lines[22];
 
 
-    // request it as input again, but this time we're also listening
+    // request it as input anfd listen
     // for edges; both in this case.
     line.requestInput(consumer: "test",triggers: {SignalEdge.falling, SignalEdge.rising});
 
