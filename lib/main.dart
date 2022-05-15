@@ -1,10 +1,8 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_gpiod/flutter_gpiod.dart';
 //import 'package:flutter_gpiod/flutter_gpiod.dart';
+import 'package:maxx/gpioHandling.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 void main() {
@@ -27,20 +25,8 @@ class _UIState extends State<UI> {
   String bImage = "assets/background.jpg";
   var line1;
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    final chips = FlutterGpiod.instance.chips;
 
-    final chip = chips.singleWhere(
-      (chip) => chip.label == 'pinctrl-bcm2711',
-      orElse: () =>
-          chips.singleWhere((chip) => chip.label == 'pinctrl-bcm2835'),
-    );
-
-    line1 = chip.lines[23];
-  }
+  GpioHandling handler = GpioHandling.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +56,12 @@ class _UIState extends State<UI> {
                 ],
               ),
               TextButton(
-                  onPressed: () {
-                    getDataFromGPIO();
-                  },
+                  onPressed: () => handler.startGPIOListening(),
                   child: Text(
                     "REV IT!",
                     style: TextStyle(fontSize: 22),
-                  ))
+                  )),
+              
             ],
           ),
         ),
@@ -338,14 +323,5 @@ class _UIState extends State<UI> {
     });
   }
 
-  void getDataFromGPIO() {
-    /// Now we're listening for falling and rising edge events
-    /// on BCM 23
-    print("LOOL");
-    line1.requestInput(
-        consumer: "test 1", triggers: {SignalEdge.falling, SignalEdge.rising});
-
-    print("line value: ${line1.getValue()}");
-    line1.release();
-  }
+  
 }
