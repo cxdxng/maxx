@@ -23,11 +23,8 @@ class _UIState extends State<UI> {
   double rpmVal = 850;
   double oilTempVal = 25;
   String bImage = "assets/background.jpg";
-  var line1;
-
 
   GpioHandling handler = GpioHandling.instance;
-  
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +60,6 @@ class _UIState extends State<UI> {
                     "REV IT!",
                     style: TextStyle(fontSize: 22),
                   )),
-              
             ],
           ),
         ),
@@ -324,6 +320,4 @@ class _UIState extends State<UI> {
       oilTempVal = newValue;
     });
   }
-
-  
 }
