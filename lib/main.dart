@@ -1,8 +1,9 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-//import 'package:flutter_gpiod/flutter_gpiod.dart';
-import 'package:maxx/gpioHandling.dart';
+import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 void main() {
@@ -13,22 +14,29 @@ void main() {
 }
 
 class UI extends StatefulWidget {
-  const UI({Key? key}) : super(key: key);
+  UI({Key? key}) : super(key: key);
 
   @override
-  State<UI> createState() => UIState();
+  State<UI> createState() => _UIState();
+
 }
 
-class UIState extends State<UI> {
+class _UIState extends State<UI> {
   double rpmVal = 850;
   double oilTempVal = 25;
   String bImage = "assets/background.jpg";
-  static int lool = 0;
-  GpioHandling handler = GpioHandling.instance;
+  
+
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("INIT STATE");
+    testingGPIO();
+  }
+  @override
   Widget build(BuildContext context) {
-    handler.testingGPIO();
     return SafeArea(
       child: Scaffold(
         body: Container(
@@ -55,11 +63,12 @@ class UIState extends State<UI> {
                 ],
               ),
               TextButton(
-                  onPressed: () => handler.startGPIOListening(),
+                  onPressed: () {},
                   child: Text(
                     "REV IT!",
                     style: TextStyle(fontSize: 22),
                   )),
+              
             ],
           ),
         ),
@@ -310,10 +319,9 @@ class UIState extends State<UI> {
   }
 
   void updateRPM(double newValue) {
-    //setState(() {
-    rpmVal = newValue;
-    print(rpmVal);
-    //});
+    setState(() {
+      rpmVal = newValue;
+    });
   }
 
   void updateOilTemp(double newValue) {
@@ -321,4 +329,49 @@ class UIState extends State<UI> {
       oilTempVal = newValue;
     });
   }
+
+
+  void testingGPIO() async {
+    
+    print("STARTING GPIO TEST");
+    // Get the main Raspberry Pi GPIO chip.
+    // On Raspberry Pi 4 the main GPIO chip is called `pinctrl-bcm2711` and
+    // on older Pi's or a Pi 4 with older kernel version it's called `pinctrl-bcm2835`.
+    final chip = FlutterGpiod.instance.chips
+        .singleWhere((chip) => chip.label == 'pinctrl-bcm2835');
+
+    // Get line 22 of the GPIO chip.
+    // This is the BCM 22 pin of the Raspberry Pi.
+    final line = chip.lines[22];
+
+    // request it as input anfd listen
+    // for edges; both in this case.
+    line.requestInput(
+        consumer: "riseAndFall", triggers: {SignalEdge.falling, SignalEdge.rising});
+
+    // line.onEvent will not emit any events if no triggers
+    // are requested for the line.
+    // this will run forevers
+
+    await for (final event in line.onEvent) {
+      if (event.edge == SignalEdge.rising) {
+        setState(() {
+          rpmVal = 850;
+        });
+        print("I AM RISING! YAAAAA");
+        
+      } else {
+        setState(() {
+          rpmVal = 5463;
+        });
+        print("I AM FALLING! NOOOOO");
+      }
+
+      //print("got GPIO line signal event: $event");
+    }
+
+    line.release();
+  }
+
+  
 }
