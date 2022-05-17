@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:maxx/main.dart';
 
@@ -18,8 +18,6 @@ class GpioHandling {
   }
 
   void testingGPIO() async {
-    UI ui = UI();
-
     print("STARTING GPIO TEST");
     // Get the main Raspberry Pi GPIO chip.
     // On Raspberry Pi 4 the main GPIO chip is called `pinctrl-bcm2711` and
@@ -38,11 +36,12 @@ class GpioHandling {
 
     // line.onEvent will not emit any events if no triggers
     // are requested for the line.
-    // this will run forever
+    // this will run forevers
 
     await for (final event in line.onEvent) {
       if (event.edge == SignalEdge.rising) {
         print("I AM RISING! YAAAAA");
+        UIState().updateRPM(5000);
       } else {
         print("LOOOOOOL");
       }

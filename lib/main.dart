@@ -8,7 +8,7 @@ import 'package:syncfusion_flutter_gauges/gauges.dart';
 void main() {
   runApp(MaterialApp(
     initialRoute: "/",
-    routes: {"/": (context) => const UI()},
+    routes: {"/": (context) => UI()},
   ));
 }
 
@@ -16,14 +16,14 @@ class UI extends StatefulWidget {
   const UI({Key? key}) : super(key: key);
 
   @override
-  State<UI> createState() => _UIState();
+  State<UI> createState() => UIState();
 }
 
-class _UIState extends State<UI> {
+class UIState extends State<UI> {
   double rpmVal = 850;
   double oilTempVal = 25;
   String bImage = "assets/background.jpg";
-
+  static int lool = 0;
   GpioHandling handler = GpioHandling.instance;
 
   @override
@@ -310,9 +310,10 @@ class _UIState extends State<UI> {
   }
 
   void updateRPM(double newValue) {
-    setState(() {
-      rpmVal = newValue;
-    });
+    //setState(() {
+    rpmVal = newValue;
+    print(rpmVal);
+    //});
   }
 
   void updateOilTemp(double newValue) {
