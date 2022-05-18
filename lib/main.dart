@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';
-
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
@@ -24,6 +24,7 @@ class UI extends StatefulWidget {
 class _UIState extends State<UI> {
   double rpmVal = 850;
   double oilTempVal = 25;
+  int outsideTemp = 0;
   String bImage = "assets/background.jpg";
   
 
@@ -235,12 +236,12 @@ class _UIState extends State<UI> {
                 GaugeAnnotation(
                     widget: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: const <Widget>[
+                      children: <Widget>[
                         // Added image widget as an annotation
 
                         Padding(
                           padding: EdgeInsets.fromLTRB(0, 2, 0, 0),
-                          child: Text('28°C',
+                          child: Text("$outsideTemp°C",
                               style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 25,
@@ -332,6 +333,9 @@ class _UIState extends State<UI> {
 
 
   void testingGPIO() async {
+
+    int riseTime = 0;
+    int fallTime = 1;
     
     print("STARTING GPIO TEST");
     // Get the main Raspberry Pi GPIO chip.
@@ -355,16 +359,16 @@ class _UIState extends State<UI> {
 
     await for (final event in line.onEvent) {
       if (event.edge == SignalEdge.rising) {
-        setState(() {
-          rpmVal = 850;
-        });
-        print("I AM RISING! YAAAAA");
+        riseTime = event.timestampNanos;
+        print("I AM RISING! Timestamp: ${event.timestampNanos}");
         
       } else {
+        fallTime = event.timestampNanos;
         setState(() {
-          rpmVal = 5463;
+          oilTempVal = ((fallTime-riseTime)~/(1e+6)).roundToDouble();
         });
-        print("I AM FALLING! NOOOOO");
+        print("I AM FALLING! Timestamp: ${event.timestampNanos}");
+        print(outsideTemp);
       }
 
       //print("got GPIO line signal event: $event");
