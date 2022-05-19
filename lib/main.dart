@@ -1,7 +1,5 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
@@ -23,9 +21,15 @@ class UI extends StatefulWidget {
 
 class _UIState extends State<UI> {
   double rpmVal = 850;
-  double oilTempVal = 25;
-  int outsideTemp = 0;
+  double oilTemp = 0;
+  double outsideTemp = 0;
   String bImage = "assets/background.jpg";
+  
+  // Get the main Raspberry Pi GPIO chip.
+  // On Raspberry Pi 4 the main GPIO chip is called `pinctrl-bcm2711` and
+  // on older Pi's or a Pi 4 with older kernel version it's called `pinctrl-bcm2835`.
+
+  final chip = FlutterGpiod.instance.chips.singleWhere((chip) => chip.label == 'pinctrl-bcm2835');
   
 
 
@@ -34,7 +38,10 @@ class _UIState extends State<UI> {
     // TODO: implement initState
     super.initState();
     print("INIT STATE");
-    testingGPIO();
+    getOutsideTemp();
+    getOilTemp();
+
+    
   }
   @override
   Widget build(BuildContext context) {
@@ -64,9 +71,15 @@ class _UIState extends State<UI> {
                 ],
               ),
               TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      outsideTemp = 0;
+                      oilTemp = 0;
+                    });
+                    
+                  },
                   child: Text(
-                    "REV IT!",
+                    "RESET",
                     style: TextStyle(fontSize: 22),
                   )),
               
@@ -181,7 +194,7 @@ class _UIState extends State<UI> {
             ],
             pointers: [
               NeedlePointer(
-                value: oilTempVal,
+                value: oilTemp,
                 enableAnimation: true,
                 lengthUnit: GaugeSizeUnit.factor,
                 needleStartWidth: 1,
@@ -209,11 +222,12 @@ class _UIState extends State<UI> {
 
   SizedBox buildOutdoorTemp() {
     return SizedBox(
-      width: 200,
-      height: 200,
+      width: 210,
+      height: 210,
       child: SfRadialGauge(
         axes: <RadialAxis>[
           RadialAxis(
+              backgroundImage: AssetImage("assets/gaugeLight.png"),
               interval: 1,
               radiusFactor: 1,
               startAngle: 270,
@@ -221,15 +235,16 @@ class _UIState extends State<UI> {
               showTicks: false,
               showLabels: false,
               axisLineStyle: const AxisLineStyle(thickness: 20),
-              pointers: const <GaugePointer>[
+              pointers: <GaugePointer>[
                 RangePointer(
-                    value: 26,
-                    width: 20,
+                    pointerOffset: 30,
+                    value: (outsideTemp*2),
+                    width: 15,
                     color: Colors.white,
                     enableAnimation: true,
                     gradient: SweepGradient(
-                        colors: <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
-                        stops: <double>[0.25, 0.75]),
+                        colors: const <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
+                        stops: const <double>[0.25, 0.75]),
                     cornerStyle: CornerStyle.bothCurve)
               ],
               annotations: <GaugeAnnotation>[
@@ -237,7 +252,6 @@ class _UIState extends State<UI> {
                     widget: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        // Added image widget as an annotation
 
                         Padding(
                           padding: EdgeInsets.fromLTRB(0, 2, 0, 0),
@@ -297,8 +311,8 @@ class _UIState extends State<UI> {
                   endValue: 100,
                   sizeUnit: GaugeSizeUnit.factor,
                   gradient: const SweepGradient(
-                      colors: <Color>[Colors.red, Colors.green],
-                      stops: <double>[0.25, 0.75]),
+                      colors: <Color>[Colors.red,Colors.orange,  Colors.green],
+                      stops: <double>[0.25, 0.5 ,0.75]),
                   startWidth: 0.4,
                   endWidth: 0.4,
                   color: const Color(0xFF00A8B5),
@@ -317,41 +331,23 @@ class _UIState extends State<UI> {
         color: Colors.black,
         borderWidth: 0.05,
         borderColor: Colors.black);
-  }
-
-  void updateRPM(double newValue) {
-    setState(() {
-      rpmVal = newValue;
-    });
-  }
-
-  void updateOilTemp(double newValue) {
-    setState(() {
-      oilTempVal = newValue;
-    });
-  }
+  } 
 
 
-  void testingGPIO() async {
+  void getOutsideTemp() async {
 
     int riseTime = 0;
     int fallTime = 1;
     
-    print("STARTING GPIO TEST");
-    // Get the main Raspberry Pi GPIO chip.
-    // On Raspberry Pi 4 the main GPIO chip is called `pinctrl-bcm2711` and
-    // on older Pi's or a Pi 4 with older kernel version it's called `pinctrl-bcm2835`.
-    final chip = FlutterGpiod.instance.chips
-        .singleWhere((chip) => chip.label == 'pinctrl-bcm2835');
+    print("Getting Outside Temp");
+    
+    // Get line 3 of the GPIO chip.
+    // This is the BCM 3 pin of the Raspberry Pi.
+    final line = chip.lines[3];
 
-    // Get line 22 of the GPIO chip.
-    // This is the BCM 22 pin of the Raspberry Pi.
-    final line = chip.lines[22];
-
-    // request it as input anfd listen
+    // request it as input and listen
     // for edges; both in this case.
-    line.requestInput(
-        consumer: "riseAndFall", triggers: {SignalEdge.falling, SignalEdge.rising});
+    line.requestInput(consumer: "riseAndFall", triggers: {SignalEdge.falling, SignalEdge.rising});
 
     // line.onEvent will not emit any events if no triggers
     // are requested for the line.
@@ -360,18 +356,57 @@ class _UIState extends State<UI> {
     await for (final event in line.onEvent) {
       if (event.edge == SignalEdge.rising) {
         riseTime = event.timestampNanos;
-        print("I AM RISING! Timestamp: ${event.timestampNanos}");
         
       } else {
         fallTime = event.timestampNanos;
-        setState(() {
-          oilTempVal = ((fallTime-riseTime)~/(1e+6)).roundToDouble();
-        });
-        print("I AM FALLING! Timestamp: ${event.timestampNanos}");
-        print(outsideTemp);
-      }
 
-      //print("got GPIO line signal event: $event");
+        setState(() {
+          // Substract the falltime from th risetime
+          // to get pulse length in nanoseconds.
+          // Then divide that by 1e+6 to get pulse length
+          // in miliseconds, which represents temp value.
+          
+          outsideTemp = ((fallTime-riseTime)~/(1e+6)).roundToDouble();
+        });
+      }
+    }
+
+    line.release();
+  }
+
+  void getOilTemp() async {
+    int riseTime = 0;
+    int fallTime = 1;
+    
+    print("Getting Oil Temp");
+    
+    // Get line 4 of the GPIO chip.
+    // This is the BCM 4 pin of the Raspberry Pi.
+    final line = chip.lines[4];
+
+    // request it as input and listen
+    // for edges; both in this case.
+    line.requestInput(consumer: "riseAndFall", triggers: {SignalEdge.falling, SignalEdge.rising});
+
+    // line.onEvent will not emit any events if no triggers
+    // are requested for the line.
+    // this will run forevers
+
+    await for (final event in line.onEvent) {
+      if (event.edge == SignalEdge.rising) {
+        riseTime = event.timestampNanos;
+        
+      } else {
+        fallTime = event.timestampNanos;
+
+        // Substract the falltime from th risetime
+        // to get pulse length in nanoseconds.
+        // Then divide that by 1e+6 to get pulse length
+        // in miliseconds, which represents temp value.
+        setState(() {
+          oilTemp = ((fallTime-riseTime)~/(1e+6)).roundToDouble();
+        });
+      }
     }
 
     line.release();
