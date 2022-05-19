@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_gpiod/flutter_gpiod.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
@@ -23,6 +25,7 @@ class _UIState extends State<UI> {
   double rpmVal = 850;
   double oilTemp = 0;
   double outsideTemp = 0;
+  double voltageVal = 0;
   String bImage = "assets/background.jpg";
   
   // Get the main Raspberry Pi GPIO chip.
@@ -40,6 +43,7 @@ class _UIState extends State<UI> {
     print("INIT STATE");
     getOutsideTemp();
     getOilTemp();
+    getVoltage();
 
     
   }
@@ -106,8 +110,9 @@ class _UIState extends State<UI> {
             startAngle: 170,
             endAngle: 370,
             labelOffset: 25,
+            
             tickOffset: 60,
-            axisLabelStyle: GaugeTextStyle(color: Colors.white),
+            axisLabelStyle: GaugeTextStyle(color: Colors.white, fontWeight: FontWeight.w900),
             majorTickStyle: MajorTickStyle(color: Colors.white),
             minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
             pointers: [
@@ -126,7 +131,7 @@ class _UIState extends State<UI> {
               GaugeAnnotation(
                   angle: 90,
                   positionFactor: 0.5,
-                  widget: Text('RPM x1000',
+                  widget: Text('R.P.M.',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -155,7 +160,7 @@ class _UIState extends State<UI> {
             endAngle: 370,
             labelOffset: 20,
             tickOffset: 60,
-            axisLabelStyle: GaugeTextStyle(color: Colors.white),
+            axisLabelStyle: GaugeTextStyle(color: Colors.white, fontWeight: FontWeight.w900),
             majorTickStyle: MajorTickStyle(color: Colors.white),
             minorTickStyle: MinorTickStyle(color: Colors.grey[700]),
             ranges: [
@@ -167,17 +172,10 @@ class _UIState extends State<UI> {
                 startWidth: 15.0,
                 endWidth: 15.0,
               ),
+              
               GaugeRange(
                 rangeOffset: 110,
                 startValue: 51,
-                endValue: 70,
-                color: Colors.cyan[700],
-                startWidth: 15.0,
-                endWidth: 15.0,
-              ),
-              GaugeRange(
-                rangeOffset: 110,
-                startValue: 71,
                 endValue: 110,
                 color: Colors.green[700],
                 startWidth: 15.0,
@@ -225,6 +223,7 @@ class _UIState extends State<UI> {
       width: 210,
       height: 210,
       child: SfRadialGauge(
+        enableLoadingAnimation: true,
         axes: <RadialAxis>[
           RadialAxis(
               backgroundImage: AssetImage("assets/gaugeLight.png"),
@@ -237,15 +236,18 @@ class _UIState extends State<UI> {
               axisLineStyle: const AxisLineStyle(thickness: 20),
               pointers: <GaugePointer>[
                 RangePointer(
+                    
                     pointerOffset: 30,
                     value: (outsideTemp*2),
                     width: 15,
                     color: Colors.white,
                     enableAnimation: true,
                     gradient: SweepGradient(
+                        
                         colors: const <Color>[Color(0xff6699CC), Color(0xFFFF3C38)],
                         stops: const <double>[0.25, 0.75]),
-                    cornerStyle: CornerStyle.bothCurve)
+                        
+                        cornerStyle: CornerStyle.bothCurve,)
               ],
               annotations: <GaugeAnnotation>[
                 GaugeAnnotation(
@@ -285,9 +287,9 @@ class _UIState extends State<UI> {
               interval: 10,
               showLabels: false,
               showAxisLine: false,
-              pointers: const <GaugePointer>[
+              pointers: <GaugePointer>[
                 MarkerPointer(
-                    value: 90,
+                    value: (2.2-(14-voltageVal))*45.454545455,
                     elevation: 4,
                     markerWidth: 25,
                     markerHeight: 25,
@@ -295,11 +297,11 @@ class _UIState extends State<UI> {
                     markerType: MarkerType.invertedTriangle,
                     markerOffset: -7)
               ],
-              annotations: const [
+              annotations: [
                 GaugeAnnotation(
                     angle: 270,
                     positionFactor: 0.1,
-                    widget: Text('14,2 V',
+                    widget: Text('$voltageVal V',
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -312,7 +314,7 @@ class _UIState extends State<UI> {
                   sizeUnit: GaugeSizeUnit.factor,
                   gradient: const SweepGradient(
                       colors: <Color>[Colors.red,Colors.orange,  Colors.green],
-                      stops: <double>[0.25, 0.5 ,0.75]),
+                      stops: <double>[0.2, 0.4 ,0.75]),
                   startWidth: 0.4,
                   endWidth: 0.4,
                   color: const Color(0xFF00A8B5),
@@ -338,9 +340,7 @@ class _UIState extends State<UI> {
 
     int riseTime = 0;
     int fallTime = 1;
-    
-    print("Getting Outside Temp");
-    
+        
     // Get line 3 of the GPIO chip.
     // This is the BCM 3 pin of the Raspberry Pi.
     final line = chip.lines[3];
@@ -377,9 +377,7 @@ class _UIState extends State<UI> {
   void getOilTemp() async {
     int riseTime = 0;
     int fallTime = 1;
-    
-    print("Getting Oil Temp");
-    
+        
     // Get line 4 of the GPIO chip.
     // This is the BCM 4 pin of the Raspberry Pi.
     final line = chip.lines[4];
@@ -399,12 +397,50 @@ class _UIState extends State<UI> {
       } else {
         fallTime = event.timestampNanos;
 
-        // Substract the falltime from th risetime
-        // to get pulse length in nanoseconds.
-        // Then divide that by 1e+6 to get pulse length
-        // in miliseconds, which represents temp value.
         setState(() {
+          // Substract the falltime from th risetime
+          // to get pulse length in nanoseconds.
+          // Then divide that by 1e+6 to get pulse length
+          // in miliseconds, which represents temp value.
+
           oilTemp = ((fallTime-riseTime)~/(1e+6)).roundToDouble();
+        });
+      }
+    }
+
+    line.release();
+  }
+
+  void getVoltage() async {
+    int riseTime = 0;
+    int fallTime = 1;
+        
+    // Get line 4 of the GPIO chip.
+    // This is the BCM 4 pin of the Raspberry Pi.
+    final line = chip.lines[5];
+
+    // request it as input and listen
+    // for edges; both in this case.
+    line.requestInput(consumer: "riseAndFall", triggers: {SignalEdge.falling, SignalEdge.rising});
+
+    // line.onEvent will not emit any events if no triggers
+    // are requested for the line.
+    // this will run forevers
+
+    await for (final event in line.onEvent) {
+      if (event.edge == SignalEdge.rising) {
+        riseTime = event.timestampNanos;
+        
+      } else {
+        fallTime = event.timestampNanos;
+
+        setState(() {
+          // Substract the falltime from th risetime
+          // to get pulse length in nanoseconds.
+          // Then divide that by 1e+6 to get pulse length
+          // in miliseconds, which represents temp value.
+
+          voltageVal = double.parse(((fallTime-riseTime)/(1e+6)).toStringAsFixed(1));
         });
       }
     }
